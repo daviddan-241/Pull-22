@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: token-launcher-bot
+    runtime: python
+    plan: standard
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SEED_PHRASE
+        sync: false
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: JUPITER_API_KEY
+        sync: false
+      - key: HELIUS_API_KEY
+        sync: false
+      - key: TOKEN_NAME
+        value: MyToken
+      - key: TOKEN_SYMBOL
+        value: MTK
+      - key: TOKEN_DECIMALS
+        value: 9
+      - key: TOKEN_SUPPLY
+        value: 1000000000
+      - key: VOLUME_WALLET_COUNT
+        value: 5
+      - key: VOLUME_MIN_SOL
+        value: 0.01
+      - key: VOLUME_MAX_SOL
+        value: 0.05
