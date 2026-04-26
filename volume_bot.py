@@ -70,7 +70,8 @@ class VolumeEngine:
             while self.running and time.time() < end_time:
                 try:
                     w = random.choice(self.wallets)
-                    kp = Keypair.from_json(w["private_key"])
+                    # FIX: Use from_bytes() with hex decoding instead of from_json()
+                    kp = Keypair.from_bytes(bytes.fromhex(w["private_key"]))
                     trader = SolanaTrader(kp)
 
                     sol_amount = random.uniform(VOLUME_MIN_SOL, VOLUME_MAX_SOL)
