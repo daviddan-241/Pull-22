@@ -16,9 +16,13 @@ from profit_calc import calculate_rug_profit, format_profit_report, calculate_cu
 from max_extract import calculate_all_strategies, format_extraction_report, calculate_5_dollar_strategy
 from lp_trap import explain_lp_trap, calculate_lp_vs_no_lp, format_lp_trap_report
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
+# Initialize traders
 trader = SolanaTrader()
 token_mgr = SolanaTokenManager()
 analytics = SolanaAnalytics()
@@ -98,12 +102,14 @@ def liquidity_kb():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sol = trader.get_sol_balance()
-    mint = context.user_data.get('mint', 'Not set')
-    text = (f"ð¤ *{TOKEN_NAME} Multi-Chain Bot*\n\n"
-            f"ð¼ Solana: `{wallet.solana_pubkey[:8]}...`\n"
-            f"ð¼ ETH: `{wallet.eth_address[:10]}...`\n"
-            f"ð° SOL: `{sol:.3f}` | ðª `{mint[:8]}...`\n\n"
-            f"Choose action:")
+    mint = context.user_data.get("mint", "Not set")
+    text = (
+        f"ð¤ *{TOKEN_NAME} Multi-Chain Bot*\n\n"
+        f"ð¼ Solana: `{wallet.solana_pubkey[:8]}...`\n"
+        f"ð¼ ETH: `{wallet.eth_address[:10]}...`\n"
+        f"ð° SOL: `{sol:.3f}` | ðª `{mint[:8]}...`\n\n"
+        f"Choose action:"
+    )
     if update.callback_query:
         await update.callback_query.edit_message_text(text, parse_mode="Markdown", reply_markup=main_kb())
     else:
@@ -113,7 +119,7 @@ async def set_token(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Usage: `/settoken <mint>`", parse_mode="Markdown")
         return
-    context.user_data['mint'] = context.args[0]
+    context.user_data["mint"] = context.args[0]
     await update.message.reply_text(f"â Token set: `{context.args[0]}`", parse_mode="Markdown")
 
 # âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -125,7 +131,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     d = query.data
     user_id = update.effective_user.id
-    mint = context.user_data.get('mint')
+    mint = context.user_data.get("mint")
 
     if d == "m_main":
         await start(update, context)
@@ -133,13 +139,17 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif d == "m_wallet":
         sol = trader.get_sol_balance()
         addrs = wallet.get_all_addresses()
-        text = (f"ð¼ *Wallets*\n\n"
-                f"*Solana:* `{addrs['solana']}`\n"
-                f"Balance: `{sol:.4f}` SOL\n\n"
-                f"*EVM:* `{addrs['ethereum']}`\n\n"
-                f"Seed: {'â' if wallet.seed_phrase else 'â'}")
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("ð REFRESH", callback_data="m_wallet")],
-                                   [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_main")]])
+        text = (
+            f"ð¼ *Wallets*\n\n"
+            f"*Solana:* `{addrs['solana']}`\n"
+            f"Balance: `{sol:.4f}` SOL\n\n"
+            f"*EVM:* `{addrs['ethereum']}`\n\n"
+            f"Seed: {'â' if wallet.seed_phrase else 'â'}"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("ð REFRESH", callback_data="m_wallet")],
+            [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_main")]
+        ])
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb)
 
     elif d == "m_launch":
@@ -150,10 +160,12 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("â³ Creating token mint...", reply_markup=None)
         try:
             mint_addr, tx = token_mgr.create_mint()
-            context.user_data['mint'] = mint_addr
+            context.user_data["mint"] = mint_addr
             text = f"â *Mint Created!*\n\n`{mint_addr}`\n\nTx: `{tx[:20]}...`"
-            kb = InlineKeyboardMarkup([[InlineKeyboardButton("ðª MINT SUPPLY", callback_data="l_mint")],
-                                       [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_launch")]])
+            kb = InlineKeyboardMarkup([
+                [InlineKeyboardButton("ðª MINT SUPPLY", callback_data="l_mint")],
+                [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_launch")]
+            ])
             await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb)
         except Exception as e:
             await query.edit_message_text(f"â `{str(e)}`", parse_mode="Markdown", reply_markup=launch_kb())
@@ -175,25 +187,31 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not mint:
             await query.edit_message_text("â Create token first!", reply_markup=launch_kb())
             return
-        guide = (f"ð *Create Pool*\n\nToken: `{mint}`\n\n"
-                 f"ð [Smithii](https://tools.smithii.io/liquidity-pool/solana?base={mint})\n\n"
-                 f"Need ~2-5 SOL for LP")
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("ð OPEN SMITHII", url=f"https://tools.smithii.io/liquidity-pool/solana?base={mint}")],
-                                   [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_launch")]])
+        guide = (
+            f"ð *Create Pool*\n\nToken: `{mint}`\n\n"
+            f"ð [Smithii](https://tools.smithii.io/liquidity-pool/solana?base={mint})\n\n"
+            f"Need ~2-5 SOL for LP"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("ð OPEN SMITHII", url=f"https://tools.smithii.io/liquidity-pool/solana?base={mint}")],
+            [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_launch")]
+        ])
         await query.edit_message_text(guide, parse_mode="Markdown", reply_markup=kb, disable_web_page_preview=True)
 
     elif d == "l_auto":
         await query.edit_message_text("ð Auto launch...", reply_markup=None)
         try:
             mint_addr, tx1 = token_mgr.create_mint()
-            context.user_data['mint'] = mint_addr
+            context.user_data["mint"] = mint_addr
             await asyncio.sleep(2)
             amount = TOKEN_SUPPLY * (10 ** TOKEN_DECIMALS)
             tx2 = token_mgr.mint_to_wallet(mint_addr, amount)
-            text = (f"â *Auto Launch Done!*\n\n"
-                    f"Mint: `{mint_addr}`\n"
-                    f"Supply: `{TOKEN_SUPPLY:,}`\n\n"
-                    f"Next: Create pool via Liquidity menu")
+            text = (
+                f"â *Auto Launch Done!*\n\n"
+                f"Mint: `{mint_addr}`\n"
+                f"Supply: `{TOKEN_SUPPLY:,}`\n\n"
+                f"Next: Create pool via Liquidity menu"
+            )
             await query.edit_message_text(text, parse_mode="Markdown", reply_markup=main_kb())
         except Exception as e:
             await query.edit_message_text(f"â `{str(e)}`", parse_mode="Markdown", reply_markup=launch_kb())
@@ -205,13 +223,15 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bal = trader.get_token_balance(mint)
         holders = analytics.get_holder_count(mint)
         price = analytics.get_token_price(mint)
-        value = bal['ui'] * price
-        text = (f"ð´ *Sell Dashboard*\n\n"
-                f"Token: `{mint[:10]}...`\n"
-                f"Balance: `{bal['ui']:,.2f}`\n"
-                f"Price: `${price:.8f}`\n"
-                f"Value: `${value:.2f}`\n"
-                f"Holders: `{holders}`\n\nSelect:")
+        value = bal["ui"] * price
+        text = (
+            f"ð´ *Sell Dashboard*\n\n"
+            f"Token: `{mint[:10]}...`\n"
+            f"Balance: `{bal['ui']:,.2f}`\n"
+            f"Price: `${price:.8f}`\n"
+            f"Value: `${value:.2f}`\n"
+            f"Holders: `{holders}`\n\nSelect:"
+        )
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=sell_kb())
 
     elif d == "s_balance":
@@ -220,10 +240,12 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         bal = trader.get_token_balance(mint)
         price = analytics.get_token_price(mint)
-        text = (f"ð¼ *Balance*\n\n"
-                f"Tokens: `{bal['ui']:,.2f}`\n"
-                f"Price: `${price:.8f}`\n"
-                f"Value: `${bal['ui'] * price:.2f}`")
+        text = (
+            f"ð¼ *Balance*\n\n"
+            f"Tokens: `{bal['ui']:,.2f}`\n"
+            f"Price: `${price:.8f}`\n"
+            f"Value: `${bal['ui'] * price:.2f}`"
+        )
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=sell_kb())
 
     elif d in ["s_25", "s_50", "s_100"]:
@@ -232,10 +254,10 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         pct = int(d.split("_")[1])
         bal = trader.get_token_balance(mint)
-        if bal['raw'] == 0:
+        if bal["raw"] == 0:
             await query.edit_message_text("â Zero balance!", reply_markup=sell_kb())
             return
-        amount = int(bal['raw'] * pct / 100)
+        amount = int(bal["raw"] * pct / 100)
         await query.edit_message_text(f"â³ Selling {pct}%...", reply_markup=None)
         try:
             sig = trader.sell_token(mint, amount)
@@ -250,13 +272,13 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("â No token!", reply_markup=sell_kb())
             return
         bal = trader.get_token_balance(mint)
-        if bal['raw'] == 0:
+        if bal["raw"] == 0:
             await query.edit_message_text("â Zero balance!", reply_markup=sell_kb())
             return
         await query.edit_message_text("â³ DCA selling 5 chunks...", reply_markup=None)
         try:
             sigs = []
-            chunk = bal['raw'] // 5
+            chunk = bal["raw"] // 5
             for i in range(5):
                 sig = trader.sell_token(mint, chunk)
                 sigs.append(sig)
@@ -272,10 +294,12 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("â `/settoken <mint>` first", parse_mode="Markdown", reply_markup=main_kb())
             return
         price = analytics.get_token_price(mint)
-        text = (f"ð¢ *Buy*\n\n"
-                f"Token: `{mint[:10]}...`\n"
-                f"Price: `${price:.8f}`\n"
-                f"SOL: `{trader.get_sol_balance():.3f}`\n\nSelect:")
+        text = (
+            f"ð¢ *Buy*\n\n"
+            f"Token: `{mint[:10]}...`\n"
+            f"Price: `${price:.8f}`\n"
+            f"SOL: `{trader.get_sol_balance():.3f}`\n\nSelect:"
+        )
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=buy_kb())
 
     elif d in ["b_0.1", "b_0.5", "b_1.0", "b_2.0"]:
@@ -294,9 +318,11 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif d == "m_volume":
         running = user_id in volume_engines and volume_engines[user_id].running
-        text = (f"ð *Volume Bot*\n\n"
-                f"Wallets: {5}\n"
-                f"Status: {'ð¢ Running' if running else 'ð´ Stopped'}")
+        text = (
+            f"ð *Volume Bot*\n\n"
+            f"Wallets: {5}\n"
+            f"Status: {'ð¢ Running' if running else 'ð´ Stopped'}"
+        )
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=volume_kb())
 
     elif d == "v_start":
@@ -322,10 +348,12 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif d == "v_stats":
         if user_id in volume_engines:
             stats = volume_engines[user_id].get_status()
-            text = (f"ð *Stats*\n\n"
-                    f"Running: {'Yes' if stats['running'] else 'No'}\n"
-                    f"Trades: `{stats['trades']}`\n"
-                    f"Volume: `{stats['volume_sol']:.2f}` SOL")
+            text = (
+                f"ð *Stats*\n\n"
+                f"Running: {'Yes' if stats['running'] else 'No'}\n"
+                f"Trades: `{stats['trades']}`\n"
+                f"Volume: `{stats['volume_sol']:.2f}` SOL"
+            )
             await query.edit_message_text(text, parse_mode="Markdown", reply_markup=volume_kb())
         else:
             await query.edit_message_text("No session", reply_markup=volume_kb())
@@ -384,28 +412,36 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("â No token!", reply_markup=liquidity_kb())
             return
         text = f"ð [Create on Smithii](https://tools.smithii.io/liquidity-pool/solana?base={mint})"
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("ð OPEN", url=f"https://tools.smithii.io/liquidity-pool/solana?base={mint}"),
-                                   [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_liquidity")]])
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("ð OPEN", url=f"https://tools.smithii.io/liquidity-pool/solana?base={mint}")],
+            [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_liquidity")]
+        ])
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb, disable_web_page_preview=True)
 
     elif d == "m_profit":
-        text = (f"ð§® *Profit Calc*\n\n"
-                f"Scenario:\n"
-                f"â¢ You buy $11\n"
-                f"â¢ 10 people buy $40 ($400)\n"
-                f"â¢ You hold 90%\n"
-                f"â¢ You sell everything\n\n"
-                f"How much?")
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("ð§® CALCULATE", callback_data="p_calc")],
-                                   [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_main")]])
+        text = (
+            f"ð§® *Profit Calc*\n\n"
+            f"Scenario:\n"
+            f"â¢ You buy $11\n"
+            f"â¢ 10 people buy $40 ($400)\n"
+            f"â¢ You hold 90%\n"
+            f"â¢ You sell everything\n\n"
+            f"How much?"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("ð§® CALCULATE", callback_data="p_calc")],
+            [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_main")]
+        ])
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb)
 
     elif d == "p_calc":
         await query.edit_message_text("ð§® Calculating...", reply_markup=None)
         calc = calculate_custom_scenario(your_buy_usd=11, your_tokens_pct=90, buyer_count=10, buyer_total_usd=400, lp_sol=2.0)
         text = format_profit_report(calc)
-        kb = InlineKeyboardMarkup([[InlineKeyboardButton("ð RECALC", callback_data="p_calc")],
-                                   [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_profit")]])
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("ð RECALC", callback_data="p_calc")],
+            [InlineKeyboardButton("â¬ï¸ BACK", callback_data="m_profit")]
+        ])
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb)
 
     elif d == "m_lp_trap":
@@ -427,13 +463,15 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=kb)
 
     elif d == "m_max":
-        text = (f"ð *Maximum Extraction*\n\n"
-                f"Compare ALL strategies side by side:\n"
-                f"â¢ Pump.fun only ($5 budget)\n"
-                f"â¢ Minimal LP (2 SOL)\n"
-                f"â¢ Big LP (10 SOL) - THE TRAP\n"
-                f"â¢ Partner LP (BEST - $0 cost)\n\n"
-                f"See exactly why adding liquidity KILLS profit.")
+        text = (
+            f"ð *Maximum Extraction*\n\n"
+            f"Compare ALL strategies side by side:\n"
+            f"â¢ Pump.fun only ($5 budget)\n"
+            f"â¢ Minimal LP (2 SOL)\n"
+            f"â¢ Big LP (10 SOL) - THE TRAP\n"
+            f"â¢ Partner LP (BEST - $0 cost)\n\n"
+            f"See exactly why adding liquidity KILLS profit."
+        )
         kb = InlineKeyboardMarkup([
             [InlineKeyboardButton("ðµ $5 Budget", callback_data="max_5")],
             [InlineKeyboardButton("ð° $300 Budget", callback_data="max_300")],
@@ -463,12 +501,14 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif d == "m_settings":
         addrs = wallet.get_all_addresses()
-        text = (f"âï¸ *Settings*\n\n"
-                f"Solana: `{addrs['solana'][:16]}...`\n"
-                f"EVM: `{addrs['ethereum'][:16]}...`\n\n"
-                f"Token: {TOKEN_NAME} ({TOKEN_SYMBOL})\n"
-                f"Supply: {TOKEN_SUPPLY:,}\n\n"
-                f"/settoken `<mint>`")
+        text = (
+            f"âï¸ *Settings*\n\n"
+            f"Solana: `{addrs['solana'][:16]}...`\n"
+            f"EVM: `{addrs['ethereum'][:16]}...`\n\n"
+            f"Token: {TOKEN_NAME} ({TOKEN_SYMBOL})\n"
+            f"Supply: {TOKEN_SUPPLY:,}\n\n"
+            f"/settoken `<mint>`"
+        )
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=main_kb())
 
 
@@ -495,6 +535,8 @@ def run_bot():
     print("[BOT] Starting polling mode (Render compatible)...", flush=True)
 
     # drop_pending_updates=True prevents flood on restart
+    # poll_interval=1.0 checks every second
+    # timeout=30 uses long-polling (holds connection for 30s)
     app.run_polling(
         drop_pending_updates=True,
         poll_interval=1.0,
