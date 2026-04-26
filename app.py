@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 import os
 import sys
 import traceback
@@ -13,7 +13,7 @@ bot_error = None
 
 @app.route("/")
 def home():
-    return "✅ Token Bot Running"
+    return "✅ Token Bot Running | Bot: " + bot_status
 
 @app.route("/health")
 def health():
